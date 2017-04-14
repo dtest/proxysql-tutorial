@@ -20,7 +20,7 @@ lrwxr-xr-x  1 dtest  staff  43 Sep 14 20:51 ansible/library -> /Users/dtest/deve
 ## Setup
 
 - Connect as root: `sudo su -`
-- Change directory: `cd ~/dba/admin/dev/plam16-proxysql`
+- Change directory: `cd ~/dba/admin/dev/proxysql-tutorial`
 - Run `./run_proxy.sh`
 - If that command fails for failed connecting to MySQL, run: `cd ansible && time ansible-playbook -i inventory setup.yml`
 - Connect to ProxySQL Admin interface: `./mysql -h proxy-admin`

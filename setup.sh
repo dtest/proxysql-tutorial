@@ -13,7 +13,7 @@
 #
 
 CWD=$(pwd)
-PLAM_DIR="plam16-proxysql"
+PLAM_DIR="proxysql-tutorial"
 ANSIBLE_DIR="proxysql_ansible_modules"
 DATE=$(date +"%s")
 LOG_FILE="setup_${DATE}.log"
@@ -31,7 +31,7 @@ if [ ! -e ${PLAM_DIR} ] || [ ! -e ${ANSIBLE_DIR} ];then
     sudo apt-get -y install git
     echo
 
-    echo "Cloning plam16-proxysql repo"
+    echo "Cloning ${PLAM_DIR} repo"
     echo
     git clone https://github.com/dtest/${PLAM_DIR}.git
     echo
