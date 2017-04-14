@@ -1,0 +1,20 @@
+master db_role=master proxy_hostgroup=1
+slave db_role=slave proxy_hostgroup=2
+mysqla db_role=standalone proxy_hostgroup=3
+mysqlb db_role=standalone proxy_hostgroup=4
+
+proxysql
+
+[failover]
+master
+slave
+
+[mirror]
+mysqla
+mysqlb
+
+[dbservers]
+master
+slave
+mysqla
+mysqlb

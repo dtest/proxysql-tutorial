@@ -1,0 +1,81 @@
+#!/bin/bash
+
+usage="$(basename "$0") -h HOST [-u USER] -- Wrapper to interact with docker containers
+
+where:
+  -h docker-container 'host' name
+  -u MySQL user; required for 'proxy-sql' host, ignored in other hosts
+  --help shows this help text"
+
+valid_hosts="
+Host was either not supplied, or invalid.
+
+Valid hosts are:
+  - proxy-admin: admin interface for proxysql
+  - proxy-sql: SQL interface of proxysql
+  - master: Master container for the rewrite and failover demonstrations
+  - slave: Slave container for the rewrite and failover demonstrations
+  - mysqla: MySQL 5.6 container for the mirror demonstration
+  - mysqlb: MySQL 5.7 container for the mirror demonstration"
+
+valid_users="
+User specified for proxy-sql host must be one of the following:
+
+  - plam_rewrite: Used to connect to the rewrite and failover cluster
+  - plam_mirror: Used to connect to the mirror environment"
+
+[ $# -eq 0 ] && { echo "$usage"; exit 1; }
+
+accounts="plam_rewrite
+plam_mirror"
+
+while [[ $# -ge 1 ]]
+do
+  key="$1"
+
+  case $key in
+    -h|--host)
+      HOST="$2"
+      shift # past argument
+    ;;
+    -u|--user)
+      USER="$2"
+      shift # past argument
+    ;;
+    --help|*)
+      echo "$usage"
+      exit 0
+    ;;
+
+  esac
+  shift # past argument or value
+done
+
+case $HOST in
+  proxy-admin)
+    docker exec -it proxysql mysql -h 127.0.0.1 -P 6032 -u admin -padmin
+  ;;
+  proxy-sql)
+    match=0
+    for u in $accounts; do
+      if [[ "$USER" == "$u" ]]; then
+        match=1
+        break
+      fi
+    done
+    if [[ $match -eq 0 ]]; then
+      echo "$usage
+      $valid_users"
+      exit 1
+    fi
+    docker exec -it proxysql mysql -h 127.0.0.1 -P 6033 -u $USER -pamsterdam
+  ;;
+  mysqla|mysqlb|master|slave)
+    docker exec -it $HOST mysql -u root -psecret
+  ;;
+  *)
+    echo "$usage
+    $valid_hosts
+    "
+  ;;
+esac

@@ -1,0 +1,12 @@
+---
+proxysql_port: 6032
+
+proxysql_admin:
+  user: admin
+  password: admin
+
+failover_rules:
+  - pattern: "^SELECT .* FOR UPDATE"
+    hostgroup: 1
+  - pattern: "^SELECT .*"
+    hostgroup: 2

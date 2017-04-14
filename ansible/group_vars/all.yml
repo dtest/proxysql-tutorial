@@ -1,0 +1,27 @@
+---
+root_password: secret
+
+mysql_replication:
+  user: repl
+  password: r3plp@ss
+
+proxysql_monitor:
+  user: proxysql
+  password: monitor
+  priv: "*.*:REPLICATION CLIENT"
+
+proxysql_admin:
+  user: admin
+  password: admin
+
+proxysql_rewriteuser:
+  user: plam_rewrite
+  password: "amsterdam"
+  priv: "*.*:ALL"
+  hostgroup: 1
+
+proxysql_mirroruser:
+  user: plam_mirror
+  password: "amsterdam"
+  priv: "*.*:ALL"
+  hostgroup: 3

@@ -1,0 +1,215 @@
+---
+# TODO: create rewriteuser and mirroruser for different scenarios:
+#  - rewriteuser: rewrite/stats and failover hit master/slave
+#  - mirroruser: hists mastera/masterb
+
+# TODO: configure slave as read_only
+
+# Sets up replication between master/slave docker containers
+- hosts: failover
+  become: no
+  tags: failover
+  # vars:
+  #   mysql_replication:
+  #     user: repl
+  #     password: r3plp@ss
+  #   root_password: secret
+  tasks:
+    - name: "Get replication coordinates"
+      mysql_replication:
+        mode: getmaster
+        login_password: "{{ root_password }}"
+      register: res_getmaster
+      when: db_role == 'master'
+
+    - name: "Set master facts."
+      set_fact:
+        master_coords: "{{ res_getmaster }}"
+        master_host: "{{ hostvars['master']['ansible_default_ipv4']['address'] }}"
+      when: db_role == 'master'
+
+    - name: "Set slave facts"
+      set_fact:
+        master_coords: "{{ hostvars['master']['master_coords'] }}"
+        master_host: "{{ hostvars['master']['ansible_default_ipv4']['address'] }}"
+      when: db_role == 'slave'
+
+    - name: Create replication user on master
+      mysql_user:
+        state: present
+        name: "{{ mysql_replication['user'] }}"
+        host: "%"
+        password: "{{ mysql_replication['password'] }}"
+        priv: "*.*:REPLICATION SLAVE"
+        login_password: "{{ root_password }}"
+      when: db_role == 'master'
+
+    - name: Check if slave is already configured for replication
+      mysql_replication:
+        mode: getslave
+        login_password: "{{ root_password }}"
+      ignore_errors: true
+      register: slave
+      when: db_role == 'slave'
+
+    - debug: var=slave verbosity=3
+
+    - name: Change the master in slave to start the replication
+      mysql_replication:
+        mode: changemaster
+        master_host: "{{ master_host }}"
+        master_log_file: "{{ master_coords['File'] }}"
+        master_log_pos: "{{ master_coords['Position'] }}"
+        master_user: "{{ mysql_replication['user'] }}"
+        master_password: "{{ mysql_replication['password'] }}"
+        login_password: "{{ root_password }}"
+      when: slave|failed and db_role == 'slave'
+      register: change_master
+      failed_when: change_master|failed and change_master.msg.find('Sending passwords in plain text') == -1
+      changed_when: change_master|failed and change_master.msg.find('Sending passwords in plain text') != -1
+
+    - debug: var=change_master verbosity=3
+
+    # TODO: Support delayed slaves
+    - name: Start slave
+      mysql_replication:
+        mode: startslave
+        login_password: "{{ root_password }}"
+      when: db_role == 'slave'
+
+#   - configure proxysql to point to both
+
+- hosts: dbservers
+  become: no
+  tags: proxysql
+  # vars:
+  #   proxysql_monitor:
+  #     user: proxysql
+  #     password: monitor
+  tasks:
+    - name: "MySQL | Create schema"
+      mysql_db:
+        state: present
+        name: "{{ item }}"
+        login_password: "{{ root_password }}"
+      with_items:
+        - proxysql
+        - plam
+        - sakila
+      when: db_role != 'slave'
+    - name: "MySQL | Add proxysql user"
+      mysql_user:
+        state: present
+        name: "{{ item['user'] }}"
+        host: "%"
+        password: "{{ item['password'] }}"
+        priv: "{{ item['priv'] }}"
+        login_password: "{{ root_password }}"
+      when: db_role != 'slave'
+      with_items:
+        - "{{ proxysql_monitor }}"
+        - "{{ proxysql_rewriteuser }}"
+        - "{{ proxysql_mirroruser }}"
+    - name: "Get sakila"
+      get_url:
+        url: "http://downloads.mysql.com/docs/sakila-db.tar.gz"
+        dest: /var/tmp/sakila-db.tar.gz
+      when: db_role == 'master'
+    - name: "Decompress sakila"
+      unarchive:
+        src: /var/tmp/sakila-db.tar.gz
+        dest: /var/tmp/
+        copy: no
+      when: db_role == 'master'
+    - name: "Import sakila"
+      command: "mysql -p{{ root_password }} -e 'source {{ item }}'"
+      with_items:
+        - /var/tmp/sakila-db/sakila-schema.sql
+        - /var/tmp/sakila-db/sakila-data.sql
+      when: db_role == "master"
+
+- hosts: proxysql
+  become: no
+  tags: proxysql
+  tasks:
+    - name: "ProxySQL | Add servers"
+      proxysql_backend_servers:
+        state: present
+        login_user: "{{ proxysql_admin['user'] }}"
+        login_password: "{{ proxysql_admin['password'] }}"
+        hostgroup_id: "{{ hostvars[item]['proxy_hostgroup'] }}"
+        hostname: "{{ item }}"
+        port: 3306
+        load_to_runtime: True
+      register: new_servers
+      with_items: "{{ groups['dbservers'] }}"
+    - name: "ProxySQL | Manage Monitor User"
+      proxysql_global_variables:
+        login_user: "{{ proxysql_admin['user'] }}"
+        login_password: "{{ proxysql_admin['password'] }}"
+        variable: "mysql-monitor_username"
+        value: "{{ proxysql_monitor['user'] }}"
+    - name: "ProxySQL | Manage Monitor Password"
+      proxysql_global_variables:
+        login_user: "{{ proxysql_admin['user'] }}"
+        login_password: "{{ proxysql_admin['password'] }}"
+        variable: "mysql-monitor_password"
+        value: "{{ proxysql_monitor['password'] }}"
+    - name: "ProxySQL | Update monitor intervals"
+      proxysql_global_variables:
+        login_user: "{{ proxysql_admin['user'] }}"
+        login_password: "{{ proxysql_admin['password'] }}"
+        variable: "{{ item }}"
+        value: "2000"
+      with_items:
+        - "mysql-monitor_connect_interval"
+        - "mysql-monitor_ping_interval"
+        - "mysql-monitor_read_only_interval"
+    - name: "ProxySQL | Manage MySQL Users"
+      proxysql_mysql_users:
+        state: present
+        username: "{{ item['user'] }}"
+        password: "{{ item['password'] }}"
+        default_hostgroup: "{{ item['hostgroup'] }}"
+        default_schema: "plam"
+        login_user: "{{ proxysql_admin['user'] }}"
+        login_password: "{{ proxysql_admin['password'] }}"
+      with_items:
+        - "{{ proxysql_rewriteuser }}"
+        - "{{ proxysql_mirroruser }}"
+    - name: "ProxySQL | Add Replication HostGroups"
+      proxysql_replication_hostgroups:
+        state: present
+        writer_hostgroup: 1
+        reader_hostgroup: 2
+        login_user: "{{ proxysql_admin['user'] }}"
+        login_password: "{{ proxysql_admin['password'] }}"
+    - name: "ProxySQL | Manage failover rules"
+      proxysql_query_rules:
+        state: present
+        username: "{{ proxysql_rewriteuser['user'] }}"
+        active: True
+        match_pattern: "{{ item['pattern'] }}"
+        destination_hostgroup: "{{ item['hostgroup'] }}"
+        apply: True
+        login_user: "{{ proxysql_admin['user'] }}"
+        login_password: "{{ proxysql_admin['password'] }}"
+      with_items:
+        - "{{ failover_rules }}"
+    - name: "ProxySQL | Manage mirror rules"
+      proxysql_query_rules:
+        state: present
+        username: "{{ proxysql_mirroruser['user'] }}"
+        active: True
+        destination_hostgroup: 3
+        mirror_hostgroup: 4
+        login_user: "{{ proxysql_admin['user'] }}"
+        login_password: "{{ proxysql_admin['password'] }}"
+    - name: "Add application code"
+      git:
+        repo: "https://github.com/dturner9000/plam16-rrr"
+        dest: "/root/plam-rrr"
+    - name: "Create credential file"
+      template:
+        src: "client.cnf.j2"
+        dest: "/var/tmp/my.cnf"
