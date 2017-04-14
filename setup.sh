@@ -136,6 +136,7 @@ if  [ $(docker ps |grep -v CONTAINER |wc -l) -lt 4 ] || [ $(docker ps |grep mast
     sleep 5
 
     cd ${PLAM_DIR}
+    time docker-compose pull # updates latest containers
     time docker-compose up -d
 
     echo "Giving time for containers to start; sleeping..." && sleep 50
