@@ -159,3 +159,4 @@ fi
 # fi
 
 cd ${CWD}/${PLAM_DIR}
+exec bash
