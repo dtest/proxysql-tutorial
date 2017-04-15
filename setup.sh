@@ -158,4 +158,4 @@ fi
 
 # fi
 
-cd $CWD
+cd ${CWD}/${PLAM_DIR}
