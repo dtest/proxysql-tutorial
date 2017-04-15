@@ -19,11 +19,11 @@ lrwxr-xr-x  1 dtest  staff  43 Sep 14 20:51 ansible/library -> /Users/dtest/deve
 
 ## Setup
 
-- ssh <host>
+- ssh yourhost
 - wget https://raw.githubusercontent.com/dtest/proxysql-tutorial/master/setup.sh
 - chmod 755 setup.sh
 - ./setup.sh
-- ssh <host>
+- ssh yourhost
 - ./setup.sh
 
 - Connect to ProxySQL Admin interface: `./mysql -h proxy-admin`
