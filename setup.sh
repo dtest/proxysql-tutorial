@@ -2,7 +2,7 @@
 #
 # Instructions:
 #     From your vm wget this file.
-#     o wget https://github.com/dtest/plam16-proxysql/blob/master/setup.sh
+#     o wget https://raw.githubusercontent.com/dtest/proxysql-tutorial/master/setup.sh
 #     o chmod 755 setup.sh
 #     o ./setup.sh
 #
