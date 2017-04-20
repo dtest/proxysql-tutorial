@@ -18,45 +18,7 @@ ANSIBLE_DIR="proxysql_ansible_modules"
 DATE=$(date +"%s")
 LOG_FILE="setup_${DATE}.log"
 
-
-if [ ! -e ${PLAM_DIR} ] || [ ! -e ${ANSIBLE_DIR} ];then
-
-    echo "Updating apt"
-    echo
-    sudo apt-get update
-    echo
-
-    echo "Installing git"
-    echo
-    sudo apt-get -y install git
-    echo
-
-    echo "Cloning ${PLAM_DIR} repo"
-    echo
-    git clone https://github.com/dtest/${PLAM_DIR}.git
-    echo
-
-    echo "Cloning Proxysql_ansible_modules repo"
-    echo
-    git clone https://github.com/bmildren/${ANSIBLE_DIR}.git
-    echo
-
-    echo "Linking in ${ANSIBLE_DIR}"
-    echo
-    ln -s ${CWD}/${ANSIBLE_DIR} ${CWD}/${PLAM_DIR}/ansible/library
-    echo
-
-    # echo "Getting sakila database."
-    # echo
-    # wget http://downloads.mysql.com/docs/sakila-db.tar.gz
-    # echo
-
-fi
-
-echo "Confirmed ${PLAM_DIR} and ${ANSIBLE_DIR} exist."
-echo
-echo
-
+# Do the permissions as very first thing.
 if [ $(grep docker /etc/group |wc -l) -lt 1 ];then
     sudo groupadd docker
     sudo usermod -aG docker $USER
@@ -75,6 +37,27 @@ echo "Confirmed permissions. Continuing"
 echo
 sleep 1
 
+if [ ! -e ${PLAM_DIR} ];then
+
+    echo "Updating apt"
+    echo
+    sudo apt-get update
+    echo
+
+    echo "Installing git"
+    echo
+    sudo apt-get -y install git
+    echo
+
+    echo "Cloning ${PLAM_DIR} repo"
+    echo
+    git clone https://github.com/dtest/${PLAM_DIR}.git
+    echo
+fi
+
+echo "Confirmed ${PLAM_DIR} exist."
+echo
+echo
 
 if [ $(dpkg -l |grep python |grep pip| wc -l) -lt 1 ];then
 
@@ -108,16 +91,8 @@ if [ $(dpkg -l |grep python |grep pip| wc -l) -lt 1 ];then
     sudo apt-get -y install libssl-dev
     sudo apt-get -y install libffi-dev
     sudo pip install markupsafe
-    # This seemed to fail..
-    # sudo apt-get -y install ansible
-    # Was having an issue with current version of ansible
-    sudo pip install ansible==2.1.1.0
-    # sudo pip install ansible
-    # Installed above
-    # sudo apt-get -y install git
-    #
+    sudo pip install ansible
     sudo pip install docker-compose
-
 
     echo
     echo
@@ -136,27 +111,16 @@ if  [ $(docker ps |grep -v CONTAINER |wc -l) -lt 4 ] || [ $(docker ps |grep mast
     sleep 5
 
     cd ${PLAM_DIR}
-    time docker-compose pull # updates latest containers
-    time docker-compose up -d
 
-    echo "Giving time for containers to start; sleeping..." && sleep 50
+    # exec ./run_proxy.sh
+    # time docker-compose pull # updates latest containers
+    # time docker-compose up -d
 
-    cd ansible && time ansible-playbook -i inventory setup.yml
+    # echo "Giving time for containers to start; sleeping..." && sleep 50
+
+    # cd ansible && time ansible-playbook -i inventory setup.yml
 
 fi
-
-# echo
-# echo "Sleeping 5s to ensure master container is ready for sakila"
-# echo
-# sleep 5
-
-# if  [ $(docker ps |grep master |wc -l) -gt 0 ];then
-#     echo "Copying sakila db to master container."
-#     echo
-#     docker cp ${CWD}/sakila-db.tar.gz master:/var/tmp
-#     echo
-
-# fi
 
 cd ${CWD}/${PLAM_DIR}
 exec bash
