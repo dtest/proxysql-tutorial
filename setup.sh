@@ -112,7 +112,7 @@ if  [ $(docker ps |grep -v CONTAINER |wc -l) -lt 4 ] || [ $(docker ps |grep mast
 
     cd ${PLAM_DIR}
 
-    exec ./run_proxy.sh
+    ./run_proxy.sh
     # time docker-compose pull # updates latest containers
     # time docker-compose up -d
 
@@ -121,6 +121,3 @@ if  [ $(docker ps |grep -v CONTAINER |wc -l) -lt 4 ] || [ $(docker ps |grep mast
     # cd ansible && time ansible-playbook -i inventory setup.yml
 
 fi
-
-cd ${CWD}/${PLAM_DIR}
-exec bash
