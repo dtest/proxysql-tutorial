@@ -63,10 +63,8 @@
         master_user: "{{ mysql_replication['user'] }}"
         master_password: "{{ mysql_replication['password'] }}"
         login_password: "{{ root_password }}"
-      when: slave|failed and db_role == 'slave'
+      when: db_role == 'slave' and slave.Is_Slave==false
       register: change_master
-      failed_when: change_master|failed and change_master.msg.find('Sending passwords in plain text') == -1
-      changed_when: change_master|failed and change_master.msg.find('Sending passwords in plain text') != -1
 
     - debug: var=change_master verbosity=3
 
