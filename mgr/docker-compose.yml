@@ -1,0 +1,14 @@
+#
+# starting the container:
+#   docker-compose up -d
+#
+# stopping the container:
+#   docker-compose down
+
+version: '2'
+services:
+  mgr:
+    build: .
+    image: mgr
+    command: /bin/bash -c "while true; do uptime; sleep 60;done"
+    container_name: mgr  

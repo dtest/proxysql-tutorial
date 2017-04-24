@@ -30,3 +30,10 @@ services:
     image: dtestops/proxysql
     volumes:
       - ./proxysql.cnf:/etc/proxysql.cnf
+  mgr:
+    build: mgr/
+    image: mgr
+    container_name: mgr  
+    volumes:
+      - ./ansible:/usr/local/ansible
+      - ./scripts:/usr/local/scripts

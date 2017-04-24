@@ -1,0 +1,15 @@
+#!/bin/bash
+
+list="
+proxy-admin
+proxy-sql
+master
+slave
+mysqla
+mysqlb
+"
+
+for host in ${list}
+do
+    echo ${host}
+done
