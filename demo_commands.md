@@ -1,4 +1,26 @@
 # Failover
+
+## How to use
+
+```
+cd ~/proxysql-tutorial/
+
+# start containers
+./run_proxy.sh
+
+# connect to proxy-admin
+./mysql -h proxy-admin
+
+# connect to proxy-sql
+./mysql -h proxy-sql -u plam_rewrite #FailoverDemo
+
+# connect to master
+./mysql -h master
+
+# connect to slave
+./mysql -h slave
+```
+
 ## Terminal 1
 ```
 # ProxySQL's admin interface
@@ -40,6 +62,27 @@ SET GLOBAL read_only=1;
 ```
 
 # Mirroring
+## How to use
+
+```
+cd ~/proxysql-tutorial/
+
+# start containers
+./run_proxy.sh
+
+# connect to proxy-admin
+./mysql -h proxy-admin
+
+# connect to proxy-sql
+./mysql -h proxy-sql -u plam_mirror
+
+# connect to mysql 5.6
+./mysql -h mysqla
+
+# connect to mysql 5.7
+./mysql -h mysqlb
+```
+
 ## Terminal 1
 
 ```
