@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  proxysql1:
+    container_name: proxysql1
+    image: dtestops/proxysql:1.4.8
+    volumes:
+      - ./proxysql.cnf:/etc/proxysql.cnf
+
+  proxysql2:
+    container_name: proxysql2
+    image: dtestops/proxysql:1.4.7
+    volumes:
+      - ./proxysql.cnf:/etc/proxysql.cnf

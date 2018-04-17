@@ -1,0 +1,15 @@
+- hosts: proxysql
+  become: no
+  tags: proxysql
+  tasks:
+    - name: "ProxySQL | Add servers"
+      proxysql_backend_servers:
+        state: present
+        login_user: "admin"
+        login_password: "admin"
+        hostgroup_id: "1"
+        hostname: '\"master\"'
+        port: 3306
+        load_to_runtime: True
+      register: new_servers
+
