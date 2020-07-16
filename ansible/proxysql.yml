@@ -1,0 +1,85 @@
+- hosts: proxysql
+  become: no
+  tags: proxysql
+  tasks:
+    - name: "ProxySQL | Add servers"
+      proxysql_backend_servers:
+        state: present
+        login_user: "{{ proxysql_admin['user'] }}"
+        login_password: "{{ proxysql_admin['password'] }}"
+        hostgroup_id: "{{ hostvars[item]['proxy_hostgroup'] }}"
+        hostname: "{{ item }}"
+        port: 3306
+        load_to_runtime: True
+      register: new_servers
+      with_items: "{{ groups['dbservers'] }}"
+    - name: "ProxySQL | Manage Monitor User"
+      proxysql_global_variables:
+        login_user: "{{ proxysql_admin['user'] }}"
+        login_password: "{{ proxysql_admin['password'] }}"
+        variable: "mysql-monitor_username"
+        value: "{{ proxysql_monitor['user'] }}"
+    - name: "ProxySQL | Manage Monitor Password"
+      proxysql_global_variables:
+        login_user: "{{ proxysql_admin['user'] }}"
+        login_password: "{{ proxysql_admin['password'] }}"
+        variable: "mysql-monitor_password"
+        value: "{{ proxysql_monitor['password'] }}"
+    - name: "ProxySQL | Update monitor intervals"
+      proxysql_global_variables:
+        login_user: "{{ proxysql_admin['user'] }}"
+        login_password: "{{ proxysql_admin['password'] }}"
+        variable: "{{ item }}"
+        value: "2000"
+      with_items:
+        - "mysql-monitor_connect_interval"
+        - "mysql-monitor_ping_interval"
+        - "mysql-monitor_read_only_interval"
+    - name: "ProxySQL | Manage MySQL Users"
+      proxysql_mysql_users:
+        state: present
+        username: "{{ item['user'] }}"
+        password: "{{ item['password'] }}"
+        default_hostgroup: "{{ item['hostgroup'] }}"
+        default_schema: "plam"
+        login_user: "{{ proxysql_admin['user'] }}"
+        login_password: "{{ proxysql_admin['password'] }}"
+      with_items:
+        - "{{ proxysql_rewriteuser }}"
+        - "{{ proxysql_mirroruser }}"
+    - name: "ProxySQL | Add Replication HostGroups"
+      proxysql_replication_hostgroups:
+        state: present
+        writer_hostgroup: 1
+        reader_hostgroup: 2
+        login_user: "{{ proxysql_admin['user'] }}"
+        login_password: "{{ proxysql_admin['password'] }}"
+    - name: "ProxySQL | Manage failover rules"
+      proxysql_query_rules:
+        state: present
+        username: "{{ proxysql_rewriteuser['user'] }}"
+        active: True
+        match_pattern: "{{ item['pattern'] }}"
+        destination_hostgroup: "{{ item['hostgroup'] }}"
+        apply: True
+        login_user: "{{ proxysql_admin['user'] }}"
+        login_password: "{{ proxysql_admin['password'] }}"
+      with_items:
+        - "{{ failover_rules }}"
+    - name: "ProxySQL | Manage mirror rules"
+      proxysql_query_rules:
+        state: present
+        username: "{{ proxysql_mirroruser['user'] }}"
+        active: True
+        destination_hostgroup: 3
+        mirror_hostgroup: 4
+        login_user: "{{ proxysql_admin['user'] }}"
+        login_password: "{{ proxysql_admin['password'] }}"
+    # - name: "Add application code"
+    #   git:
+    #     repo: "https://github.com/dturner9000/plam16-rrr"
+    #     dest: "/root/plam-rrr"
+    - name: "Create credential file"
+      template:
+        src: "client.cnf.j2"
+        dest: "/var/tmp/my.cnf"

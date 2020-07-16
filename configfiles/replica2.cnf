@@ -1,0 +1,4 @@
+[mysqld]
+server-id=3
+read-only=1
+log-slave-updates=1

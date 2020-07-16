@@ -1,39 +1,43 @@
-version: '2'
+version: '3'
 
 services:
-  master:
-    container_name: master
+  primary:
+    container_name: primary
     image: dtestops/percona-server:5.7
     environment:
       - "MYSQL_ROOT_PASSWORD=secret"
     volumes:
       - ./configfiles/master.cnf:/etc/mysql/conf.d/replication.cnf
-  slave:
-    container_name: slave
+      # - ./var/lib/proxysql/master-mysql-datadir:/var/lib/mysql
+  replica1:
+    container_name: replica1
     image: dtestops/percona-server:5.7
     environment:
       - "MYSQL_ROOT_PASSWORD=secret"
     volumes:
-      - ./configfiles/slave.cnf:/etc/mysql/conf.d/replication.cnf
-  mysqla:
-    container_name: mysqla
-    image: dtestops/percona-server:5.6
-    environment:
-      - "MYSQL_ROOT_PASSWORD=secret"
-  mysqlb:
-    container_name: mysqlb
+      - ./configfiles/replica1.cnf:/etc/mysql/conf.d/replication.cnf
+      # - ./var/lib/proxysql/replica1-mysql-datadir:/var/lib/mysql
+  replica2:
+    container_name: replica2
     image: dtestops/percona-server:5.7
     environment:
       - "MYSQL_ROOT_PASSWORD=secret"
-  proxysql:
-    container_name: proxysql
-    image: dtestops/proxysql
+    volumes:
+      - ./configfiles/replica2.cnf:/etc/mysql/conf.d/replication.cnf
+      # - ./var/lib/proxysql/replica2-mysql-datadir:/var/lib/mysql
+  proxysql1:
+    container_name: proxysql1
+    image: dtestops/proxysql:1.4.8
     volumes:
       - ./proxysql.cnf:/etc/proxysql.cnf
-  mgr:
-    build: mgr/
-    image: mgr
-    container_name: mgr  
+  proxysql2:
+    container_name: proxysql2
+    image: dtestops/proxysql:1.4.8
     volumes:
-      - ./ansible:/usr/local/ansible
-      - ./scripts:/usr/local/scripts
+      - ./proxysql.cnf:/etc/proxysql.cnf
+  proxysql3:
+    container_name: proxysql3
+    image: dtestops/proxysql:1.4.8
+    volumes:
+      - ./proxysql.cnf:/etc/proxysql.cnf
+

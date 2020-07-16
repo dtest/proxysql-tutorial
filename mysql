@@ -11,23 +11,23 @@ valid_hosts="
 Host was either not supplied, or invalid.
 
 Valid hosts are:
-  - proxy-admin: admin interface for proxysql
-  - proxy-sql: SQL interface of proxysql
-  - master: Master container for the rewrite and failover demonstrations
-  - slave: Slave container for the rewrite and failover demonstrations
+  - proxysql1,proxysql2,proxysql3: admin interface for proxysql1,2,3
+  - proxy-sql: SQL interface of proxysql1
+  - primary: Master container for the rewrite and failover demonstrations
+  - replica: Slave container for the rewrite and failover demonstrations
   - mysqla: MySQL 5.6 container for the mirror demonstration
   - mysqlb: MySQL 5.7 container for the mirror demonstration"
 
 valid_users="
 User specified for proxy-sql host must be one of the following:
 
-  - plam_rewrite: Used to connect to the rewrite and failover cluster
-  - plam_mirror: Used to connect to the mirror environment"
+  - pl_rewrite: Used to connect to the rewrite and failover cluster
+  - pl_mirror: Used to connect to the mirror environment"
 
 [ $# -eq 0 ] && { echo "$usage"; exit 1; }
 
-accounts="plam_rewrite
-plam_mirror"
+accounts="pl_rewrite
+pl_mirror"
 
 while [[ $# -ge 1 ]]
 do
@@ -52,8 +52,8 @@ do
 done
 
 case $HOST in
-  proxy-admin)
-    docker exec -it proxysql mysql -h 127.0.0.1 -P 6032 -u admin -padmin
+  proxysql1|proxysql2|proxysql3)
+    docker exec -it $HOST mysql -h 127.0.0.1 -P 6032 -u admin -padmin
   ;;
   proxy-sql)
     match=0
@@ -68,9 +68,9 @@ case $HOST in
       $valid_users"
       exit 1
     fi
-    docker exec -it proxysql mysql -h 127.0.0.1 -P 6033 -u $USER -pamsterdam
+    docker exec -it proxysql1 mysql -h 127.0.0.1 -P 6033 -u $USER -pperconalive
   ;;
-  mysqla|mysqlb|master|slave)
+  mysqla|mysqlb|primary|replica1)
     docker exec -it $HOST mysql -u root -psecret
   ;;
   *)

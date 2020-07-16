@@ -7,3 +7,106 @@ admin_variables =
   refresh_interval=2000
   debug=true
 }
+
+mysql_variables =
+{
+  monitor_username="proxysql"
+  monitor_password="monitor"
+
+  monitor_connect_interval=2000
+  monitor_ping_interval=2000
+  monitor_read_only_interval=2000
+}
+
+mysql_servers =
+(
+  {
+    hostgroup=1
+    address="primary"
+    port=3306
+  },
+  {
+    hostgroup=2
+    address="replica1"
+    port=3306
+  },
+  {
+    hostgroup=2
+    address="replica2"
+    port=3306
+  }
+
+)
+
+proxysql_servers =
+(
+    {
+        hostname="proxysql1"
+        port=6032
+        weight=0
+        comment="proxysql1"
+    },
+    {
+        hostname="proxysql2"
+        port=6032
+        weight=0
+        comment="proxysql2"
+    },
+    {
+        hostname="proxysql3"
+        port=6032
+        weight=0
+        comment="proxysql3"
+    }
+)
+
+mysql_users =
+(
+  {
+    username = "pl_rewrite"
+    password = "perconalive"
+    default_hostgroup = 1
+    default_schema="perconalive"
+    active = 1
+  },
+  {
+    username = "pl_mirror"
+    password = "perconalive"
+    default_hostgroup = 3
+    default_schema="perconalive"
+    active = 1
+  }
+)
+
+mysql_replication_hostgroups =
+(
+  {
+    writer_hostgroup=1
+    reader_hostgroup=2
+  }
+)
+
+mysql_query_rules =
+(
+  {
+    rule_id=1
+    username="pl_rewrite"
+    match_pattern="^SELECT .* FOR UPDATE"
+    destination_hostgroup=1
+    active=1
+  },
+  {
+    rule_id=2
+    username="pl_rewrite"
+    match_pattern="^SELECT .*"
+    destination_hostgroup=2
+    active=1
+  },
+  {
+    rule_id=3
+    username="pl_mirror"
+    destination_hostgroup=3
+    mirror_hostgroup=4
+    active=1
+  }
+)

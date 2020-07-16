@@ -1,0 +1,7 @@
+---
+- name: Ansible-Test-Docker
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: "test"
+      debug: msg="This is a test"

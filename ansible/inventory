@@ -1,20 +1,19 @@
-master db_role=master proxy_hostgroup=1
-slave db_role=slave proxy_hostgroup=2
-mysqla db_role=standalone proxy_hostgroup=3
-mysqlb db_role=standalone proxy_hostgroup=4
+primary db_role=primary proxy_hostgroup=1
+replica1 db_role=replica proxy_hostgroup=2
+replica2 db_role=replica proxy_hostgroup=2
 
-proxysql
+proxysql1
+proxysql2
+proxysql3
+
+
 
 [failover]
-master
-slave
-
-[mirror]
-mysqla
-mysqlb
+primary
+replica1
+replica2
 
 [dbservers]
-master
-slave
-mysqla
-mysqlb
+primary
+replica1
+replica2

@@ -11,7 +11,7 @@ IP_BLOCK = "192.168.41."
 
 ### Local Environment Variables (use ENVIRONMENT variables) ###
 # Configure for environment
-RAM_ASSIGNED = if ENV['VAGRANT_VM_MEMORY_SIZE']!=nil then ENV['VAGRANT_VM_MEMORY_SIZE'].to_i else 1024 end
+RAM_ASSIGNED = if ENV['VAGRANT_VM_MEMORY_SIZE']!=nil then ENV['VAGRANT_VM_MEMORY_SIZE'].to_i else 2048 end
 ###########
 
 # Ability to override the default vagrant file from a scenario's setup.sh script setting this environment variable.
@@ -28,5 +28,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       vb.memory = RAM_ASSIGNED
       vb.cpus = 1
     end
+    # config.vm.provision "shell", path: "./scripts/setup.sh"
   end
 end

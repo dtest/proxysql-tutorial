@@ -15,13 +15,13 @@ proxysql_admin:
   password: admin
 
 proxysql_rewriteuser:
-  user: plam_rewrite
-  password: "amsterdam"
+  user: pl_rewrite
+  password: "perconalive"
   priv: "*.*:ALL"
   hostgroup: 1
 
 proxysql_mirroruser:
-  user: plam_mirror
-  password: "amsterdam"
+  user: pl_mirror
+  password: "perconalive"
   priv: "*.*:ALL"
   hostgroup: 3
